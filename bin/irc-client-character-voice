@@ -61,6 +61,14 @@ class CvBot < Net::IRC::Client
   end
 
   def on_privmsg(m)
+    handle_message(m)
+  end
+
+  def on_notice(m)
+    handle_message(m)
+  end
+
+  def handle_message(m)
     channel, message = *m
     message.chomp!
 
