@@ -1,0 +1,107 @@
+#!/usr/bin/env ruby
+
+require 'irc/client/character/voice'
+require 'uri'
+require 'open-uri'
+require 'json'
+require 'net/irc'
+
+class String
+  def is_json?
+    begin
+      !!JSON.parse(self)
+    rescue
+      return false
+    end
+  end
+end
+
+class CvBot < Net::IRC::Client
+
+  def getlist(word)
+    word_escape = URI.escape(word)
+
+    if ops.apihost == nil
+      return []
+    end
+
+    url = "#{ ops.apihost }/search/actor/#{ word_escape }.json"
+
+    begin
+      json_str = open(url) do |f|
+        charset = f.charset
+        f.read
+      end
+    rescue
+      return []
+    end
+
+    puts json_str
+    return [] if !json_str.is_json?
+
+    json = JSON.parse(json_str)
+    return [] if json.size < 1
+
+    result_list = []
+    actor = json[0]
+    actor['programs'].each_with_index do |program, index|
+      character = actor['characters'][index]
+      result_list.push("#{ program['title'] } / #{ character['name'] }")
+    end
+
+    return result_list
+  end
+
+  def on_rpl_welcome(m)
+    if opts.channels != nil
+      opts.channels.each do |ch|
+        post JOIN, ch
+      end
+    end
+  end
+
+  def on_privmsg(m)
+    channel, message = *m
+    message.chomp!
+
+    if /^\!cv\s+(.+)\s*$/ =~ message.force_encoding('utf-8')
+      word = $1
+      puts word
+      list = getlist(word)
+      if list != nil && list.size > 0
+        list.each do |description|
+          post NOTICE, channel, description
+        end
+      end
+    end
+  end
+end
+
+#
+# Main
+#
+
+filepath = (ARGV.size > 0) ? ARGV[0] : 'config/config.json'
+
+if !File.exist?(file)
+  puts "please write your config : config/config.json"
+  exit 1
+end
+
+json = JSON.parse()
+server   = json['server']
+port     = json['port']
+channels = json['channels']
+apihost  = json['apihost']
+
+URLHOST=File('config/config.json').read
+
+bot = CvBot.new(server, port, {
+  nick: 'cv-bot',
+  user: 'cv-bot',
+  real: 'cv-bot',
+  channels: channels,
+  apihost: apihost,
+})
+
+bot.start
