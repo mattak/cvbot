@@ -17,6 +17,7 @@ class String
 end
 
 class CvBot < Net::IRC::Client
+  MAX_DISPLAY = 10
 
   def getlist(word)
     word_escape = URI.escape(word)
@@ -77,8 +78,11 @@ class CvBot < Net::IRC::Client
       puts word
       list = getlist(word)
       if list != nil && list.size > 0
-        list.each do |description|
+        list.take(MAX_DISPLAY).each do |description|
           post NOTICE, channel, description
+        end
+        if list.size > MAX_DISPLAY
+          post NOTICE, channel, "... #{list.size} characters"
         end
       end
     end
