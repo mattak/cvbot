@@ -21,11 +21,11 @@ class CvBot < Net::IRC::Client
   def getlist(word)
     word_escape = URI.escape(word)
 
-    if ops.apihost == nil
+    if opts.apihost == nil
       return []
     end
 
-    url = "#{ ops.apihost }/search/actor/#{ word_escape }.json"
+    url = "#{ opts.apihost }/search/actor/#{ word_escape }.json"
 
     begin
       json_str = open(url) do |f|
@@ -83,23 +83,24 @@ end
 
 filepath = (ARGV.size > 0) ? ARGV[0] : 'config/config.json'
 
-if !File.exist?(file)
+if !File.exist?(filepath)
   puts "please write your config : config/config.json"
   exit 1
 end
 
-json = JSON.parse()
+content = File.open(filepath).read
+json    = JSON.parse(content)
+
 server   = json['server']
 port     = json['port']
 channels = json['channels']
 apihost  = json['apihost']
-
-URLHOST=File('config/config.json').read
+nick     = json['nick']
 
 bot = CvBot.new(server, port, {
-  nick: 'cv-bot',
-  user: 'cv-bot',
-  real: 'cv-bot',
+  nick: nick,
+  user: nick,
+  real: nick,
   channels: channels,
   apihost: apihost,
 })

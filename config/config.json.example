@@ -2,5 +2,6 @@
     "apihost": "http://localhost:3000",
     "server":   "irc.livedoor.ne.jp",
     "port":     6667,
-    "channels": ["#anime","bot"]
+    "nick":     "cv-bot",
+    "channels": ["#bot", "#test"]
 }
