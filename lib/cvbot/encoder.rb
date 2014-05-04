@@ -13,7 +13,7 @@ module CvBot
 
     def encode(word)
       if @enable_jis
-        return `echo #{word} | nkf -j`.chomp
+        return `echo '#{word}' | nkf -j`.chomp
       end
       return word
     end
