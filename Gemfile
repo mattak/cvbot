@@ -7,3 +7,4 @@ gemspec
 
 gem 'nokogiri'
 gem 'cinch'
+gem 'test-unit'
