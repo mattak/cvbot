@@ -1,4 +1,4 @@
-# Irc::Client::Character::Voice
+# CvBot
 
 client for character voice api.
 
@@ -6,7 +6,7 @@ client for character voice api.
 
 Add this line to your application's Gemfile:
 
-    gem 'irc-client-character-voice'
+    gem 'cvbot'
 
 And then execute:
 
@@ -14,11 +14,11 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install irc-client-character-voice
+    $ gem install cvbot
 
 ## Usage
 
 Before use please write your config/config.json.
 
-    $ bundle exec ruby bin/irc-client-character-voice <config file path>?
+    $ bundle exec ruby bin/cvbot <config file path>?
 

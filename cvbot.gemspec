@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'irc/client/character/voice/version'
+require 'cvbot/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "irc-client-character-voice"
-  spec.version       = Irc::Client::Character::Voice::VERSION
+  spec.name          = "cvbot"
+  spec.version       = CvBot::VERSION
   spec.authors       = ["mattak"]
   spec.email         = ["mattak.me@gmail.com"]
   spec.summary       = %q{The irc client for character voice api.}

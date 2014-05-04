@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 ruby '2.1.1'
 
-# Specify your gem's dependencies in irc-client-character-voice.gemspec
+# Specify your gem's dependencies in cvbot.gemspec
 gemspec
 
 gem 'nokogiri'

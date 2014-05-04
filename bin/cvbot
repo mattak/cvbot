@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+require 'cvbot'
+require 'json'
+require 'cinch'
+
+#
+# Main
+#
+
+filepath = (ARGV.size > 0) ? ARGV[0] : 'config/config.json'
+
+if !File.exist?(filepath)
+  puts "please write your config : config/config.json"
+  exit 1
+end
+
+content = File.open(filepath).read
+json = JSON.parse(content)
+options = {}
+
+options[:server]   = json['server']
+options[:port]     = json['port'] || 6667
+options[:channels] = json['channels']
+options[:apihost]  = json['apihost']
+options[:nick]     = json['nick'] || 'cv-bot'
+options[:charset]  = json['charset'] || 'ISO-2022-JP'
+options[:jis]      = (options[:charset] == 'ISO-2022-JP')
+
+encoder = CvBot::Encoder.new(options[:jis])
+
+bot = Cinch::Bot.new do
+  configure do |c|
+    c.server   = options[:server]
+    c.channels = options[:channels]
+    c.port     = options[:port]
+    c.nick     = options[:nick]
+    c.plugins.plugins  = [CvBot::Client]
+    c.plugins.options[CvBot::Client] = {encoder: encoder, apihost: options[:apihost]}
+  end
+end
+
+bot.start
