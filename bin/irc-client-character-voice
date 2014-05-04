@@ -1,10 +1,11 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 
 require 'irc/client/character/voice'
 require 'uri'
 require 'open-uri'
 require 'json'
-require 'net/irc'
+require 'cinch'
 
 class String
   def is_json?
@@ -16,17 +17,44 @@ class String
   end
 end
 
-class CvBot < Net::IRC::Client
+class IRCEncoder
+  def initialize(enable_jis=true)
+    @enable_jis = enable_jis
+  end
+
+  def decode(word)
+    if @enable_jis
+      return word.force_encoding('ISO-2022-JP').encode('UTF-8')
+    end
+    return word
+  end
+
+  def encode(word)
+    if @enable_jis
+      return `echo #{word} | nkf -j`.chomp
+    end
+    return word
+  end
+end
+
+class CvBot
+  include Cinch::Plugin
   MAX_DISPLAY = 10
 
-  def getlist(word)
+  set :required_options, [:apihost, :encoder]
+
+  match /cv (.+)/, group: :blegh, method: :handle_message, react_on: :channel
+
+  def getlist(apihost, word)
+    puts `echo #{ word } | nkf --guess`
+    debug word
     word_escape = URI.escape(word)
 
-    if opts.apihost == nil
+    if apihost == nil
       return []
     end
 
-    url = "#{ opts.apihost }/search/actor/#{ word_escape }.json"
+    url = "#{ apihost }/search/actor/#{ word_escape }.json"
 
     begin
       json_str = open(url) do |f|
@@ -34,6 +62,7 @@ class CvBot < Net::IRC::Client
         f.read
       end
     rescue
+      log "request failed : #{ url }"
       return []
     end
 
@@ -53,37 +82,21 @@ class CvBot < Net::IRC::Client
     return result_list
   end
 
-  def on_rpl_welcome(m)
-    if opts.channels != nil
-      opts.channels.each do |ch|
-        post JOIN, ch
+  def handle_message(m, arg)
+    encoder = config[:encoder]
+    apihost = config[:apihost]
+    word    = encoder.decode(arg)
+    word.chomp!
+    word.gsub!(/\s+/, '')
+    target  = m.target
+
+    list = getlist(apihost, word)
+    if list != nil && list.size > 0
+      list.take(MAX_DISPLAY).each do |description|
+        target.notice encoder.encode(description)
       end
-    end
-  end
-
-  def on_privmsg(m)
-    handle_message(m)
-  end
-
-  def on_notice(m)
-    handle_message(m)
-  end
-
-  def handle_message(m)
-    channel, message = *m
-    message.chomp!
-
-    if /^\!cv\s+(.+)\s*$/ =~ message.force_encoding('utf-8')
-      word = $1
-      puts word
-      list = getlist(word)
-      if list != nil && list.size > 0
-        list.take(MAX_DISPLAY).each do |description|
-          post NOTICE, channel, description
-        end
-        if list.size > MAX_DISPLAY
-          post NOTICE, channel, "... #{list.size} characters"
-        end
+      if list.size > MAX_DISPLAY
+        target.notice "... #{list.size} characters"
       end
     end
   end
@@ -101,20 +114,28 @@ if !File.exist?(filepath)
 end
 
 content = File.open(filepath).read
-json    = JSON.parse(content)
+json = JSON.parse(content)
+options = {}
 
-server   = json['server']
-port     = json['port']
-channels = json['channels']
-apihost  = json['apihost']
-nick     = json['nick']
+options[:server]   = json['server']
+options[:port]     = json['port'] || 6667
+options[:channels] = json['channels']
+options[:apihost]  = json['apihost']
+options[:nick]     = json['nick'] || 'cv-bot'
+options[:charset]  = json['charset'] || 'ISO-2022-JP'
+options[:jis]      = (options[:charset] == 'ISO-2022-JP')
 
-bot = CvBot.new(server, port, {
-  nick: nick,
-  user: nick,
-  real: nick,
-  channels: channels,
-  apihost: apihost,
-})
+encoder = IRCEncoder.new(options[:jis])
+
+bot = Cinch::Bot.new do
+  configure do |c|
+    c.server   = options[:server]
+    c.channels = options[:channels]
+    c.port     = options[:port]
+    c.nick     = options[:nick]
+    c.plugins.plugins  = [CvBot]
+    c.plugins.options[CvBot] = {encoder: encoder, apihost: options[:apihost]}
+  end
+end
 
 bot.start

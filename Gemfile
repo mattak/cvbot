@@ -6,4 +6,4 @@ ruby '2.1.1'
 gemspec
 
 gem 'nokogiri'
-gem 'net-irc'
+gem 'cinch'
