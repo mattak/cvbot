@@ -21,18 +21,9 @@ module CvBot
       puts message
     end
 
-    def getlist(word)
-      puts `echo #{ word } | nkf --guess`
-      debug word
-      word_escape = URI.escape(word)
-
-      if @apihost == nil
-        return []
-      end
-
-      url = "#{ @apihost }/search/actor/#{ word_escape }.json"
-
+    def access_api(url)
       begin
+        debug(url)
         json_str = open(url) do |f|
           charset = f.charset
           f.read
@@ -48,6 +39,15 @@ module CvBot
       json = JSON.parse(json_str)
       return [] if json.size < 1
 
+      return json
+    end
+
+    def search_actor(word_escape)
+      url  = "#{ @apihost }/search/actor/#{ word_escape }.json"
+      json = access_api(url)
+
+      return if json == []
+
       result_list = []
       actor = json[0]
       actor['programs'].each_with_index do |program, index|
@@ -56,6 +56,39 @@ module CvBot
       end
 
       return result_list
+    end
+
+    def search_program(word_escape)
+      url  = "#{ @apihost }/search/program/#{ word_escape }.json"
+      json = access_api(url)
+      
+      return if json == []
+
+      result_list = []
+      program = json[0]
+      program['characters'].each_with_index do |character, index|
+        result_list.push "#{ character['actor']['name'] } / #{ character['name'] }"
+      end
+
+      return result_list
+    end
+
+
+    def search(word)
+      puts `echo #{ word } | nkf --guess`
+      debug word
+      word_escape = URI.escape(word)
+
+      if @apihost == nil
+        return []
+      end
+
+      actor_result = search_actor(word_escape)
+      return actor_result if actor_result != nil && actor_result.size > 0
+
+      program_result = search_program(word_escape)
+      return program_result if program_result != nil && program_result.size > 0
+
     end
   end
 end
