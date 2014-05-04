@@ -7,3 +7,9 @@ Rake::TestTask.new("unittest") do |t|
   t.warning = true
   t.verbose = true
 end
+
+task :run do
+  `bundle exec ruby bin/cvbot`
+end
+
+task :default => :unittest
