@@ -2,6 +2,8 @@ language: ruby
 rvm:
     - 2.1.1
 before_script:
+    - sudo apt-get update
+    - sudo apt-get install nkf
     - bundle install
 script:
     - bundle exec rake unittest
