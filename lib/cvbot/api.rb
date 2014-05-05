@@ -4,6 +4,8 @@ require 'set'
 
 module CvBot
   class Api
+    MAX_RANK_PROGRAMS = 3
+
     def initialize(apihost)
       @apihost = apihost
     end
@@ -131,7 +133,9 @@ module CvBot
 
       result_list = []
       json.each_with_index do |rank|
-        result_list.push("#{ rank['count'] }: #{ rank['actor']['name'] }")
+        programs = []
+        programs = rank['actor']['programs'].take(MAX_RANK_PROGRAMS).collect {|program| program['title'] }.push('...').join(' / ')
+        result_list.push("#{ rank['count'] }: #{ rank['actor']['name'] } (#{ programs })")
       end
 
       return result_list
