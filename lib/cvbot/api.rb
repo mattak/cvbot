@@ -1,5 +1,6 @@
 require 'json'
 require 'uri'
+require 'set'
 
 module CvBot
   class Api
@@ -52,12 +53,13 @@ module CvBot
 
       result_list = []
       actor = json[0]
+      names = Set.new([actor['name']])
       actor['programs'].each_with_index do |program, index|
         character = actor['characters'][index]
         result_list.push("#{ program['title'] } / #{ character['name'] }")
       end
 
-      return [actor['name'], result_list]
+      return [names.to_a, result_list]
     end
 
     def search_program(word_escape)
@@ -68,45 +70,48 @@ module CvBot
 
       result_list = []
       program = json[0]
+      titles = Set.new([program['title']])
       program['characters'].each_with_index do |character, index|
         result_list.push "#{ character['name'] } / #{ character['actor']['name'] }"
       end
 
-      return [program['title'], result_list]
+      return [titles.to_a, result_list]
     end
 
     def search_character(word_escape)
       url = "#{ @apihost }/search/character/#{ word_escape }.json"
       json = access_api(url)
-      debug "character json : #{json}"
 
       return if json == []
 
       result_list = []
-      character    = json[0]
-      result_list.push "#{ character['program']['title'] } / #{ character['actor']['name'] }"
+      names = Set.new
+      json.each do |character|
+        names.add(character['name'])
+        result_list.push "#{ character['program']['title'] } / #{ character['actor']['name'] }"
+      end
 
-      return [character['name'], result_list]
+      return [names.to_a, result_list]
     end
 
     def search(word)
       puts `echo #{ word } | nkf --guess`
       debug word
-      word_escape = URI.escape(word)
+      word_escape = URI.escape(word).gsub('?', '%3F').gsub('&', '%26')
 
       if @apihost == nil
         return []
       end
 
-      match_word, actor_result = search_actor(word_escape)
+      match_words, actor_result = search_actor(word_escape)
       debug "actor_result #{} "
-      return [:actor, match_word, actor_result] if actor_result != nil && actor_result.size > 0
+      return [:actor, match_words, actor_result] if actor_result != nil && actor_result.size > 0
 
-      match_word, program_result = search_program(word_escape)
-      return [:program, match_word, program_result] if program_result != nil && program_result.size > 0
+      match_words, program_result = search_program(word_escape)
+      return [:program, match_words, program_result] if program_result != nil && program_result.size > 0
 
-      match_word, character_result = search_character(word_escape)
-      return [:character, match_word, character_result] if character_result != nil && character_result.size > 0
+      match_words, character_result = search_character(word_escape)
+      return [:character, match_words, character_result] if character_result != nil && character_result.size > 0
 
       return []
     end

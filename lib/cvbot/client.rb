@@ -21,10 +21,10 @@ module CvBot
       word.gsub!(/\s+/, '')
       target   = m.target
 
-      type, match_word, list = @api.search(word)
+      type, match_words, list = @api.search(word)
 
       if list != nil && list.size > 0
-        target.notice "-> #{ @encoder.encode(match_word) }"
+        target.notice "-> #{ @encoder.encode(match_words.join(" / ")) }"
         list.take(MAX_DISPLAY).each do |description|
           target.notice @encoder.encode(description)
         end
