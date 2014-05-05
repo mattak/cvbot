@@ -21,6 +21,14 @@ module CvBot
       word.gsub!(/\s+/, '')
       target   = m.target
 
+      if /rank/ =~ word
+        handle_rank(target, word)
+      else
+        handle_search(target, word)
+      end
+    end
+
+    def handle_search(target, word)
       type, match_words, list = @api.search(word)
 
       if list != nil && list.size > 0
@@ -30,6 +38,18 @@ module CvBot
         end
         if list.size > MAX_DISPLAY
           target.notice "... #{list.size} characters"
+        end
+      end
+    end
+
+    def handle_rank(target, word)
+      list = @api.rank(word)
+      if list != nil && list.size > 0
+        list.take(MAX_DISPLAY).each do |description|
+          target.notice @encoder.encode(description)
+        end
+        if list.size > MAX_DISPLAY
+          target.notice "... #{list.size} ranks"
         end
       end
     end

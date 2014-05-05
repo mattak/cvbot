@@ -94,10 +94,13 @@ module CvBot
       return [names.to_a, result_list]
     end
 
+    def escape(word)
+      return URI.escape(word).gsub('?', '%3F').gsub('&', '%26')
+    end
+
     def search(word)
-      puts `echo #{ word } | nkf --guess`
       debug word
-      word_escape = URI.escape(word).gsub('?', '%3F').gsub('&', '%26')
+      word_escape = escape(word)
 
       if @apihost == nil
         return []
@@ -114,6 +117,24 @@ module CvBot
       return [:character, match_words, character_result] if character_result != nil && character_result.size > 0
 
       return []
+    end
+
+    def rank(word)
+      word_escape = escape(word)
+
+      if @apihost == nil
+        return []
+      end
+
+      json = access_api("#{ @apihost }/rank/actor.json")
+      return if json == []
+
+      result_list = []
+      json.each_with_index do |rank|
+        result_list.push("#{ rank['count'] }: #{ rank['actor']['name'] }")
+      end
+
+      return result_list
     end
   end
 end
