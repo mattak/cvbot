@@ -21,8 +21,10 @@ module CvBot
       word.gsub!(/\s+/, '')
       target   = m.target
 
-      list = @api.search(word)
+      type, match_word, list = @api.search(word)
+
       if list != nil && list.size > 0
+        target.notice "-> #{ @encoder.encode(match_word) }"
         list.take(MAX_DISPLAY).each do |description|
           target.notice @encoder.encode(description)
         end
