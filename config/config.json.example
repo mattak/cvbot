@@ -3,5 +3,6 @@
     "server":   "irc.livedoor.ne.jp",
     "port":     6667,
     "nick":     "cv-bot",
+    "charset": "UTF-8",
     "channels": ["#bot", "#test"]
 }
